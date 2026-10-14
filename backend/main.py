@@ -81,4 +81,28 @@ def ingest_event(event: SecurityEvent):
         "event_id": event_id,
         "received_at": received_at,
         "event": event,
+
     }
+
+
+@app.get("/events")
+def get_events():
+    connection = get_connection()
+
+    try:
+        rows = connection.execute(
+            """
+            SELECT event_id, event_type, username,
+                   source_ip, details, received_at
+            FROM security_events
+            ORDER BY received_at DESC
+            """
+        ).fetchall()
+
+        return {
+            "count": len(rows),
+            "events": [dict(row) for row in rows],
+        }
+    finally:
+        connection.close()
+  
