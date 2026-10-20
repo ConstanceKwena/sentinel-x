@@ -1,17 +1,26 @@
 ﻿
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Literal
 from uuid import uuid4
 
 from fastapi import FastAPI, Query
+
 from pydantic import BaseModel, Field, IPvAnyAddress
 
 from backend.database import get_connection, initialize_database
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    initialize_database()
+    yield
 
 app = FastAPI(
     title="Sentinel-X",
     description="AI-powered attack-chain detection and security operations platform.",
     version="0.1.0",
+    lifespan=lifespan,
+
 )
 
 
@@ -26,11 +35,6 @@ class SecurityEvent(BaseModel):
     username: str = Field(min_length=1, max_length=100)
     source_ip: IPvAnyAddress
     details: str | None = Field(default=None, max_length=500)
-
-
-@app.on_event("startup")
-def startup():
-    initialize_database()
 
 
 @app.get("/")
