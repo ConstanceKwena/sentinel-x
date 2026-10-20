@@ -190,3 +190,57 @@ def test_events_can_be_limited(client):
     result = response.json()
     assert result["count"] == 2
     assert len(result["events"]) == 2
+
+
+
+def test_detections_endpoint_returns_alert_for_suspicious_login(client):
+    from datetime import datetime, timedelta, timezone
+
+    start = datetime(2026, 10, 20, 10, 0, tzinfo=timezone.utc)
+
+    events = [
+        ("login_failed", 0),
+        ("login_failed", 1),
+        ("login_failed", 2),
+        ("login_success", 3),
+    ]
+
+    for index, (event_type, minutes) in enumerate(events):
+        payload = {
+            "event_type": event_type,
+            "username": "detection_test_user",
+            "source_ip": "192.0.2.77",
+            "details": "Automated detection test",
+        }
+
+        response = client.post("/events", json=payload)
+        assert response.status_code == 201
+
+        # The API assigns its own receive timestamp. The sequence is
+        # submitted in order, so the detector can evaluate it.
+    
+    response = client.get("/detections")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["count"] >= 1
+
+    matching_alerts = [
+        alert for alert in result["detections"]
+        if alert["username"] == "detection_test_user"
+        and alert["source_ip"] == "192.0.2.77"
+    ]
+
+    assert matching_alerts
+    assert matching_alerts[0]["rule_id"] == "AUTH-001"
+
+
+def test_detections_endpoint_returns_empty_list_without_matching_events(client):
+    response = client.get("/detections")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "count": 0,
+        "detections": [],
+    }
+
