@@ -1,9 +1,9 @@
-
+﻿
 from datetime import datetime, timezone
 from typing import Literal
 from uuid import uuid4
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from pydantic import BaseModel, Field, IPvAnyAddress
 
 from backend.database import get_connection, initialize_database
@@ -86,17 +86,52 @@ def ingest_event(event: SecurityEvent):
 
 
 @app.get("/events")
-def get_events():
+def get_events(
+    event_type: Literal[
+        "login_failed",
+        "login_success",
+        "privilege_change",
+        "internal_discovery",
+        "outbound_transfer",
+    ] | None = None,
+    username: str | None = None,
+    source_ip: IPvAnyAddress | None = None,
+    limit: int = Query(default=100, ge=1, le=500),
+):
     connection = get_connection()
+
+    filters = []
+    parameters = []
+
+    if event_type is not None:
+        filters.append("event_type = ?")
+        parameters.append(event_type)
+
+    if username is not None:
+        filters.append("username = ?")
+        parameters.append(username)
+
+    if source_ip is not None:
+        filters.append("source_ip = ?")
+        parameters.append(str(source_ip))
+
+    where_clause = (
+        f"WHERE {' AND '.join(filters)}"
+        if filters
+        else ""
+    )
 
     try:
         rows = connection.execute(
-            """
+            f"""
             SELECT event_id, event_type, username,
                    source_ip, details, received_at
             FROM security_events
+            {where_clause}
             ORDER BY received_at DESC
-            """
+            LIMIT ?
+            """,
+            (*parameters, limit),
         ).fetchall()
 
         return {
@@ -105,4 +140,3 @@ def get_events():
         }
     finally:
         connection.close()
-  
