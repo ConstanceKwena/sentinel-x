@@ -1,0 +1,24 @@
+:root {
+  color-scheme: dark;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #080d18;
+  color: #e8eef7;
+}
+
+* { box-sizing: border-box; }
+body { display: grid; min-height: 100vh; margin: 0; place-items: center; padding: 20px; }
+.login-card { width: min(100%, 390px); padding: 32px; border: 1px solid #1c2a3c; border-radius: 10px; background: #0e1625; }
+.brand { color: #e8eef7; font-size: 15px; font-weight: 700; letter-spacing: 1.5px; text-decoration: none; }
+.brand span { color: #45d6d2; }
+.eyebrow { margin: 32px 0 8px; color: #45d6d2; font: 10px Consolas, monospace; letter-spacing: 1.2px; }
+h1 { margin: 0 0 8px; font-size: 24px; }
+.description, .demo-hint { color: #8290a4; font-size: 13px; line-height: 1.5; }
+form { display: grid; gap: 9px; margin-top: 25px; }
+label { margin-top: 7px; color: #a0adbf; font-size: 12px; }
+input { min-height: 40px; padding: 8px 10px; border: 1px solid #28394c; border-radius: 5px; background: #0a101d; color: #e8eef7; font: inherit; }
+button { min-height: 40px; margin-top: 12px; border: 1px solid #286d71; border-radius: 5px; background: #123036; color: #88e8e2; cursor: pointer; font-weight: 600; }
+button:disabled { cursor: wait; opacity: .6; }
+.demo-hint { margin: 17px 0 0; font-size: 11px; }
+code { color: #b7c8d8; }
+#result { min-height: 20px; margin: 14px 0 0; color: #64d99b; font-size: 12px; }
+#result.error { color: #ff6678; }

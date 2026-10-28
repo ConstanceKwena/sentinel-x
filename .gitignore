@@ -221,3 +221,7 @@ __marimo__/
 
 # Sentinel-X local database
 backend/sentinel_x.db
+
+# Local IDE configuration and editor backups
+.idea/
+*.bak

@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080d18">
+    <title>Sentinel-X | Security Operations</title>
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <a class="brand" href="#overview" aria-label="Sentinel-X dashboard">
+          <span class="brand-mark">S</span>
+          <span><strong>SENTINEL<span class="brand-x">-X</span></strong><small>SECURITY OPERATIONS</small></span>
+        </a>
+        <div class="workspace-label">WORKSPACE</div>
+        <a class="nav-link active" href="#overview"><span class="nav-icon">◈</span> Overview</a>
+        <a class="nav-link" href="#incidents"><span class="nav-icon">⌁</span> Incidents <span id="nav-incident-count" class="nav-count">0</span></a>
+        <a class="nav-link" href="#events"><span class="nav-icon">≋</span> Event stream</a>
+        <div class="sidebar-foot">
+          <span class="pulse-dot"></span>
+          <span>Detection engine online</span>
+          <small>RULE-BASED · LOCAL</small>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="crumb"><span>Workspace</span><b>/</b><strong>Security overview</strong></div>
+          <div class="top-actions">
+            <span id="api-status" class="live-status"><span class="pulse-dot"></span> CHECKING API</span>
+            <label class="sr-only" for="simulation-scenario">Choose a safe simulation scenario</label>
+            <select id="simulation-scenario" class="simulation-select">
+              <option value="full_attack_chain">Full attack chain</option>
+              <option value="brute_force">Brute-force attempts</option>
+              <option value="account_compromise">Account compromise</option>
+              <option value="privilege_escalation">Privilege escalation</option>
+              <option value="data_transfer">Suspicious data transfer</option>
+            </select>
+            <button id="simulate-button" class="button button-primary"><span>▶</span> Run safe simulation</button>
+          </div>
+        </header>
+
+        <section id="overview" class="page-content">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">THREAT MONITORING</p>
+              <h1>Security overview</h1>
+              <p class="subheading">Live signals and incident activity across your environment.</p>
+            </div>
+            <div id="updated-at" class="updated-label">Waiting for live data</div>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric-card">
+              <div class="metric-top"><span>Total events</span><span class="metric-icon cyan">≋</span></div>
+              <div id="total-events" class="metric-value">—</div>
+              <div class="metric-note">Recorded security signals</div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><span>Failed logins</span><span class="metric-icon red">!</span></div>
+              <div id="failed-logins" class="metric-value">—</div>
+              <div class="metric-note">Observed in selected activity</div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><span>Successful logins</span><span class="metric-icon cyan">✓</span></div>
+              <div id="successful-logins" class="metric-value">—</div>
+              <div class="metric-note">Observed in selected activity</div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><span>Active incidents</span><span class="metric-icon violet">⌁</span></div>
+              <div id="active-incidents" class="metric-value">—</div>
+              <div class="metric-note">Open or under investigation</div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><span>Critical incidents</span><span class="metric-icon red">!</span></div>
+              <div id="critical-threats" class="metric-value">—</div>
+              <div class="metric-note">Unresolved in selected activity</div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><span>Blocked sources</span><span class="metric-icon red">⊘</span></div>
+              <div id="blocked-sources" class="metric-value">—</div>
+              <div class="metric-note">Active demo-app blocks</div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><span>Connected applications</span><span class="metric-icon cyan">↔</span></div>
+              <div id="connected-app-count" class="metric-value">—</div>
+              <div class="metric-note">Recently observed event sources</div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-top"><span>Recent detections</span><span class="metric-icon violet">⌁</span></div>
+              <div id="detection-count" class="metric-value">—</div>
+              <div class="metric-note">Rule findings in selected activity</div>
+            </article>
+          </div>
+
+          <div class="overview-grid">
+            <section class="panel severity-panel">
+              <div class="panel-heading"><div><h2>Incident severity</h2><p>Current distribution across all incidents</p></div><span class="panel-mark">01</span></div>
+              <div id="severity-chart" class="severity-chart" aria-live="polite"></div>
+            </section>
+            <section class="panel chain-panel">
+              <div class="panel-heading"><div><h2>Attack-chain correlation</h2><p>Related events in a verified sequence</p></div><span class="panel-mark">02</span></div>
+              <div id="chain-list" class="chain-list"><div class="empty-state">Loading correlated activity…</div></div>
+            </section>
+          </div>
+
+          <section id="incidents" class="panel incident-panel">
+            <div class="panel-heading incident-heading">
+              <div><h2>Incident queue</h2><p>Investigate, prioritize, and track suspicious activity</p></div>
+              <div class="filters">
+                <label class="sr-only" for="status-filter">Filter by status</label>
+                <select id="status-filter"><option value="">All statuses</option><option>Open</option><option>Investigating</option><option>Resolved</option></select>
+                <label class="sr-only" for="severity-filter">Filter by severity</label>
+                <select id="severity-filter"><option value="">All severities</option><option>Critical</option><option>High</option><option>Medium</option><option>Low</option></select>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Incident</th><th>Severity</th><th>Risk</th><th>Status</th><th>Last updated</th><th></th></tr></thead>
+                <tbody id="incident-rows"><tr><td colspan="6" class="empty-state">Loading incidents…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="events" class="panel events-panel">
+            <div class="panel-heading event-heading">
+              <div><h2>Security event stream</h2><p id="event-view-description">Connected-application events · newest first</p></div>
+              <form id="event-filter-form" class="filters event-filters">
+                <label class="sr-only" for="activity-origin">Choose activity source</label>
+                <select id="activity-origin">
+                  <option value="connected_application" selected>Connected application</option>
+                  <option value="simulation">Simulation</option>
+                  <option value="unknown">Unknown origin</option>
+                  <option value="all">All activity</option>
+                </select>
+                <label class="sr-only" for="event-type-filter">Filter by event type</label>
+                <select id="event-type-filter"><option value="">All event types</option><option value="login_failed">Failed login</option><option value="login_success">Successful login</option><option value="privilege_change">Privilege change</option><option value="internal_discovery">Internal discovery</option><option value="outbound_transfer">Outbound transfer</option></select>
+                <label class="sr-only" for="event-username-filter">Filter by username</label>
+                <input id="event-username-filter" type="search" maxlength="100" placeholder="Username">
+                <label class="sr-only" for="event-ip-filter">Filter by source IP</label>
+                <input id="event-ip-filter" type="search" maxlength="45" placeholder="Source IP">
+                <label class="sr-only" for="source-application-filter">Filter by source application</label>
+                <input id="source-application-filter" type="search" maxlength="64" placeholder="Application">
+                <button class="detail-button" type="submit">Apply</button>
+              </form>
+              <span class="panel-mark">03</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Timestamp</th><th>Event</th><th>Account</th><th>Source IP</th><th>Application</th><th>Origin</th><th>Investigation</th></tr></thead>
+                <tbody id="event-rows"><tr><td colspan="7" class="empty-state">Loading events…</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+          <section class="panel response-panel">
+            <div class="panel-heading">
+              <div><h2>Detection findings</h2><p>Rule-based findings supported by the selected event source</p></div>
+              <span class="panel-mark">04</span>
+            </div>
+            <div id="detection-list" class="response-list"><div class="empty-state">No detections in the selected activity.</div></div>
+          </section>
+          <section class="panel response-panel">
+            <div class="panel-heading">
+              <div><h2>Connected applications</h2><p>External applications reporting events to Sentinel-X</p></div>
+              <span class="panel-mark">05</span>
+            </div>
+            <div id="application-list" class="response-list"><div class="empty-state">No connected applications have reported events.</div></div>
+          </section>
+          <section class="panel response-panel">
+            <div class="panel-heading">
+              <div><h2>Temporary source blocks</h2><p id="response-policy-note">Local demo-app policy only; no network traffic or firewall rules are changed.</p></div>
+              <span class="panel-mark">06</span>
+            </div>
+            <div id="block-rows" class="response-list"><div class="empty-state">No active source blocks.</div></div>
+          </section>
+          <section class="panel response-panel">
+            <div class="panel-heading">
+              <div><h2>Threat response history</h2><p>Automatic blocks and administrator removals</p></div>
+              <span class="panel-mark">07</span>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Action</th><th>Source IP</th><th>Actor</th><th>Time</th><th>Expiration</th></tr></thead>
+                <tbody id="response-history-rows"><tr><td colspan="5" class="empty-state">No response actions recorded.</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+          <footer>Sentinel-X <span>·</span> Local rule-based detection <span>·</span> Event data stored in SQLite</footer>
+        </section>
+      </main>
+    </div>
+
+    <dialog id="incident-dialog" class="incident-dialog">
+      <div class="dialog-top"><div><p class="eyebrow">INCIDENT INVESTIGATION</p><h2 id="dialog-title">Incident details</h2></div><button id="dialog-close" class="icon-button" aria-label="Close incident details">×</button></div>
+      <div id="dialog-content"></div>
+    </dialog>
+    <dialog id="event-dialog" class="incident-dialog">
+      <div class="dialog-top"><div><p class="eyebrow">EVENT INVESTIGATION</p><h2 id="event-dialog-title">Security event</h2></div><button id="event-dialog-close" class="icon-button" aria-label="Close event details">×</button></div>
+      <div id="event-dialog-content"></div>
+    </dialog>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </body>
+</html>

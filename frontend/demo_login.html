@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#080d18">
+    <title>Demo Application | Sentinel-X</title>
+    <link rel="stylesheet" href="/demo.css">
+    <script src="/demo.js" defer></script>
+  </head>
+  <body>
+    <main class="login-card">
+      <a class="brand" href="http://127.0.0.1:8000/dashboard">SENTINEL<span>-X</span></a>
+      <p class="eyebrow">CONNECTED DEMO APPLICATION</p>
+      <h1>Application sign in</h1>
+      <p class="description">Login activity is sent to Sentinel-X for monitoring.</p>
+      <form id="login-form">
+        <label for="username">Account</label>
+        <input id="username" name="username" autocomplete="username" maxlength="100" required>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" maxlength="200" required>
+        <button type="submit">Sign in</button>
+      </form>
+      <p class="demo-hint">Demo account: <code>demo-user</code> / <code>demo-password</code></p>
+      <p id="result" role="status" aria-live="polite"></p>
+    </main>
+  </body>
+</html>
