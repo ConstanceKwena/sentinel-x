@@ -1,100 +1,60 @@
+"""Trigger the backend's local-only synthetic attack demonstration."""
 
+import argparse
 import json
-import time
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-API_URL = "http://127.0.0.1:8000/events"
 
-# A controlled, simulated attack sequence.
-# All events use documentation-only IP addresses.
-ATTACK_SCENARIO = [
-    {
-        "event_type": "login_failed",
-        "username": "simulation_user",
-        "source_ip": "192.0.2.50",
-        "details": "Simulated failed login attempt 1",
-    },
-    {
-        "event_type": "login_failed",
-        "username": "simulation_user",
-        "source_ip": "192.0.2.50",
-        "details": "Simulated failed login attempt 2",
-    },
-    {
-        "event_type": "login_failed",
-        "username": "simulation_user",
-        "source_ip": "192.0.2.50",
-        "details": "Simulated failed login attempt 3",
-    },
-    {
-        "event_type": "login_success",
-        "username": "simulation_user",
-        "source_ip": "192.0.2.50",
-        "details": "Simulated successful login after failures",
-    },
-    {
-        "event_type": "privilege_change",
-        "username": "simulation_user",
-        "source_ip": "192.0.2.50",
-        "details": "Simulated privilege escalation",
-    },
-    {
-        "event_type": "internal_discovery",
-        "username": "simulation_user",
-        "source_ip": "192.0.2.50",
-        "details": "Simulated internal network discovery",
-    },
-    {
-        "event_type": "outbound_transfer",
-        "username": "simulation_user",
-        "source_ip": "192.0.2.50",
-        "details": "Simulated suspicious outbound data transfer",
-    },
-]
+API_URL = "http://127.0.0.1:8000/simulation/run"
+SCENARIOS = (
+    "brute_force",
+    "account_compromise",
+    "privilege_escalation",
+    "data_transfer",
+    "full_attack_chain",
+)
 
 
-def send_event(event):
-    payload = json.dumps(event).encode("utf-8")
-
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--scenario",
+        choices=SCENARIOS,
+        default="full_attack_chain",
+        help="Synthetic event sequence to send (default: full_attack_chain).",
+    )
+    arguments = parser.parse_args()
     request = Request(
         API_URL,
-        data=payload,
+        data=json.dumps({"scenario": arguments.scenario}).encode("utf-8"),
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-
-    with urlopen(request, timeout=5) as response:
-        result = json.loads(response.read().decode("utf-8"))
-        print(
-            f"[{response.status}] "
-            f"{event['event_type']} for {event['username']} "
-            f"(ID: {result['event_id']})"
-        )
-
-
-def main():
-    print("Starting Sentinel-X attack simulation...")
-    print(f"Sending {len(ATTACK_SCENARIO)} events to {API_URL}\n")
-
     try:
-        for event in ATTACK_SCENARIO:
-            send_event(event)
-            time.sleep(0.3)
-
+        with urlopen(request, timeout=10) as response:
+            result = json.loads(response.read().decode("utf-8"))
     except HTTPError as error:
-        print(f"API rejected an event: HTTP {error.code}")
-        print(error.read().decode("utf-8"))
-
+        body = error.read().decode("utf-8", errors="replace")
+        print(f"Simulation request rejected: HTTP {error.code}: {body}")
+        return
     except URLError as error:
         print(f"Could not connect to Sentinel-X API: {error.reason}")
-        print("Make sure the backend server is running.")
-
+        print("Start the backend with: python -m uvicorn backend.main:app --reload")
+        return
     except TimeoutError:
         print("The API request timed out.")
+        return
 
-    else:
-        print("\nSimulation complete. All events were accepted.")
+    print(f"{result['message']} Scenario: {result['scenario']}")
+    print(f"Synthetic events recorded: {result['event_count']}")
+    print(f"Incidents created: {result['incidents_created']}")
+    print(f"Correlated attack chains: {len(result['attack_chains'])}")
+    for event_id in result["event_ids"]:
+        print(f"  Event: {event_id}")
+    for chain in result["attack_chains"]:
+        print(f"  Chain: {chain['description']}")
+        print(f"  Account: {chain['username']} from {chain['source_ip']}")
 
 
 if __name__ == "__main__":

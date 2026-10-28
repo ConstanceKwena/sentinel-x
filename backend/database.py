@@ -22,7 +22,7 @@ def get_connection():
 
 
 def initialize_database():
-    """Create or safely upgrade the event and incident tables."""
+    """Create or safely upgrade the event, incident, and response tables."""
     DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
     connection = get_connection()
 
@@ -36,10 +36,16 @@ def initialize_database():
                 username TEXT NOT NULL,
                 source_ip TEXT NOT NULL,
                 details TEXT,
-                received_at TEXT NOT NULL
+                received_at TEXT NOT NULL,
+                source_origin TEXT NOT NULL DEFAULT 'unknown',
+                source_application TEXT
             )
             """
         )
+        _ensure_columns(connection, "security_events", {
+            "source_origin": "TEXT NOT NULL DEFAULT 'unknown'",
+            "source_application": "TEXT",
+        })
         connection.execute(
             """
             CREATE INDEX IF NOT EXISTS idx_events_received_at
@@ -50,6 +56,12 @@ def initialize_database():
             """
             CREATE INDEX IF NOT EXISTS idx_events_identity_time
             ON security_events(username, source_ip, received_at)
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_events_origin_application_time
+            ON security_events(source_origin, source_application, received_at)
             """
         )
         connection.execute(
@@ -67,6 +79,11 @@ def initialize_database():
                 explanation TEXT NOT NULL,
                 recommended_actions TEXT NOT NULL,
                 attack_chain TEXT,
+                source_origin TEXT NOT NULL DEFAULT 'unknown',
+                source_application TEXT,
+                source_ip TEXT,
+                username TEXT,
+                rule_id TEXT,
                 status TEXT NOT NULL DEFAULT 'Open' CHECK (
                     status IN ('Open', 'Investigating', 'Resolved')
                 ),
@@ -75,6 +92,13 @@ def initialize_database():
             )
             """
         )
+        _ensure_columns(connection, "incidents", {
+            "source_origin": "TEXT NOT NULL DEFAULT 'unknown'",
+            "source_application": "TEXT",
+            "source_ip": "TEXT",
+            "username": "TEXT",
+            "rule_id": "TEXT",
+        })
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS incident_history (
@@ -96,10 +120,83 @@ def initialize_database():
         )
         connection.execute(
             """
+            CREATE INDEX IF NOT EXISTS idx_incidents_provenance_rule
+            ON incidents(source_origin, source_application, rule_id, status)
+            """
+        )
+        connection.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_incident_history_incident
             ON incident_history(incident_id, changed_at)
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS connected_applications (
+                application_id TEXT PRIMARY KEY,
+                first_seen_at TEXT NOT NULL,
+                last_seen_at TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS response_blocks (
+                source_ip TEXT PRIMARY KEY,
+                blocked_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                reason TEXT NOT NULL,
+                removed_at TEXT,
+                rule_id TEXT,
+                incident_id TEXT,
+                source_origin TEXT NOT NULL DEFAULT 'unknown',
+                source_application TEXT
+            )
+            """
+        )
+        _ensure_columns(connection, "response_blocks", {
+            "rule_id": "TEXT",
+            "incident_id": "TEXT",
+            "source_origin": "TEXT NOT NULL DEFAULT 'unknown'",
+            "source_application": "TEXT",
+        })
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS response_actions (
+                action_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source_ip TEXT NOT NULL,
+                action TEXT NOT NULL,
+                occurred_at TEXT NOT NULL,
+                expires_at TEXT,
+                reason TEXT NOT NULL,
+                actor TEXT NOT NULL,
+                source_origin TEXT NOT NULL DEFAULT 'unknown',
+                source_application TEXT
+            )
+            """
+        )
+        _ensure_columns(connection, "response_actions", {
+            "source_origin": "TEXT NOT NULL DEFAULT 'unknown'",
+            "source_application": "TEXT",
+        })
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_response_actions_occurred
+            ON response_actions(occurred_at)
             """
         )
         connection.commit()
     finally:
         connection.close()
+
+
+def _ensure_columns(connection, table: str, columns: dict[str, str]) -> None:
+    existing = {
+        row["name"]
+        for row in connection.execute(f"PRAGMA table_info({table})").fetchall()
+    }
+    for column, definition in columns.items():
+        if column not in existing:
+            connection.execute(
+                f"ALTER TABLE {table} ADD COLUMN {column} {definition}"
+            )

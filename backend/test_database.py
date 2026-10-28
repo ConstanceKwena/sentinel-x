@@ -1,5 +1,5 @@
 
-from database import DATABASE_PATH, initialize_database, get_connection
+from backend.database import DATABASE_PATH, initialize_database, get_connection
 
 
 def main():
