@@ -7,6 +7,136 @@ Cybersecurity threat detection and incident response platform.
 
 Sentinel-X is a local-first security event detection and incident-response demo. It uses FastAPI, SQLite, deterministic Python detection rules, and a dependency-free browser dashboard. Events and incidents remain in a local SQLite database; no external AI or network service is required.
 
+
+
+## Why I Built Sentinel-X
+
+Cyberattacks often begin with warning signs such as repeated failed logins, suspicious account activity, and unexpected privilege changes. Without proper security monitoring, these activities can go unnoticed.
+
+I built **Sentinel-X** to understand how cybersecurity professionals detect suspicious behaviour, investigate threats, and respond to security incidents.
+
+This project allowed me to gain practical experience in:
+
+- Security event monitoring and log analysis
+- Brute-force attack detection
+- Rule-based threat detection and risk scoring
+- Security incident investigation
+- Attack chain correlation
+- Automated incident response
+- Python, FastAPI, SQLite, and API testing
+
+My goal was to build more than just a dashboard. I wanted to demonstrate how monitoring, detection, investigation, and response work together in a **Security Operations Centre (SOC)**.
+
+## Key Features
+
+| Feature | Description |
+|---------|-------------|
+| Live Security Monitoring | Captures successful and failed login attempts from a connected demo application. |
+| Threat Detection | Identifies brute-force attempts, suspicious authentication patterns, privilege changes, and unusual data-transfer events. |
+| Risk Scoring | Assigns severity levels to detected threats using transparent, rule-based scoring. |
+| Attack Chain Correlation | Connects related security events to identify potential attack sequences. |
+| Automated Threat Response | Temporarily blocks suspicious IP addresses within the demo login application. |
+| Incident Investigation | Displays event timelines, incident evidence, detection explanations, and response history. |
+| Safe Attack Simulation | Simulates cybersecurity scenarios without attacking real systems. |
+| Persistent Storage | Uses SQLite to store security events, incidents, and response actions. |
+
+## Demo Walkthrough
+
+This walkthrough demonstrates how Sentinel-X monitors security events, detects suspicious behaviour, and responds to potential threats.
+
+### 1. Start the Security Dashboard
+
+Start the FastAPI backend:
+
+```powershell
+python -m uvicorn backend.main:app --reload
+```
+
+Open the dashboard:
+
+**http://127.0.0.1:8000/dashboard**
+
+### 2. Start the Demo Login Application
+
+In a separate terminal, start the demo application:
+
+```powershell
+python -m uvicorn backend.demo_login:app --host 127.0.0.1 --port 8001 --reload
+```
+
+Open:
+
+**http://127.0.0.1:8001**
+
+> **Note:** Configure the same `SENTINEL_INGEST_API_KEY` in both terminals before starting the applications. See the External Application and Safe Response Demo section for the complete setup.
+
+### 3. Generate a Successful Login
+
+Sign in using the demo credentials:
+
+- **Username:** `demo-user`
+- **Password:** `demo-password`
+
+Return to the dashboard and observe the successful login event.
+
+### 4. Simulate Suspicious Login Activity
+
+Enter incorrect passwords using at least two different usernames from the same source IP.
+
+Sentinel-X records the failed login attempts and evaluates them against its security detection rules.
+
+### 5. Trigger Automated Threat Response
+
+With automatic blocking enabled, generate:
+
+- At least **5 failed login attempts**
+- Within **10 minutes**
+- Across **2 or more usernames**
+- From the **same source IP**
+
+When these conditions are met, Sentinel-X temporarily blocks that IP from logging into the connected demo application for **15 minutes**.
+
+### 6. Investigate the Security Incident
+
+Use the dashboard to examine:
+
+- Security event timestamps
+- Source IP addresses
+- Targeted usernames
+- Triggered detection rules
+- Risk scores and severity levels
+- Related incidents and attack timelines
+- Automatic blocking actions and response history
+
+### 7. Run a Safe Attack Simulation
+
+Use the dashboard's simulation feature or run:
+
+```powershell
+python -m backend.simulate_attack --scenario full_attack_chain
+```
+
+This demonstrates a simulated attack sequence involving:
+
+1. Multiple failed login attempts
+2. A successful login
+3. A privilege change
+4. A suspicious outbound data transfer
+
+Sentinel-X correlates these events to help identify a potential attack chain.
+
+Simulation activity is kept distinguishable from verified connected-application events.
+
+### 8. Understand the Security Workflow
+
+Sentinel-X demonstrates a simplified Security Operations Centre workflow:
+
+**Monitor → Detect → Investigate → Respond**
+
+The project demonstrates how security events can be collected, analysed, correlated, and used to trigger automated responses.
+
+> **Security Limitation:** Sentinel-X is an educational cybersecurity project. Its automatic blocking mechanism is enforced only within the connected demo login application. It does not modify firewall rules or block real network traffic.
+
 ## Requirements and installation
 
 - Python 3.10 or later
