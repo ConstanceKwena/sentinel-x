@@ -42,6 +42,93 @@ My goal was to build more than just a dashboard. I wanted to demonstrate how mon
 
 ## Demo Walkthrough
 
+
+## Fresh Start — Demo Mode
+
+Sentinel-X uses SQLite to save security events, incidents, and response history. Normally, this information stays saved even after restarting the application.
+
+If you want to start with an empty dashboard for a demonstration, follow these steps.
+
+**Note:** This creates a new demo database without deleting your previous data.
+
+### Step 1: Start Sentinel-X (Terminal 1)
+
+Open PowerShell in the project folder and run:
+
+```powershell
+$env:SENTINEL_DATABASE_PATH = "$env:TEMP\sentinel_x_demo_$([guid]::NewGuid().ToString('N')).db"
+$env:SENTINEL_INGEST_API_KEY = "sentinel-demo-key-2026"
+$env:SENTINEL_ADMIN_API_KEY = "sentinel-admin-key-2026"
+$env:SENTINEL_RESPONSE_FAILED_LOGIN_THRESHOLD = "5"
+$env:SENTINEL_RESPONSE_WINDOW_MINUTES = "10"
+$env:SENTINEL_RESPONSE_BLOCK_MINUTES = "15"
+$env:SENTINEL_RESPONSE_MINIMUM_ACCOUNTS = "2"
+$env:SENTINEL_AUTO_BLOCK_ENABLED = "true"
+
+python -m uvicorn backend.main:app --reload
+```
+
+Open the Sentinel-X dashboard:
+
+http://127.0.0.1:8000/dashboard
+
+### Step 2: Start the Demo Login Application (Terminal 2)
+
+Open a second PowerShell terminal in the project folder and run:
+
+```powershell
+$env:SENTINEL_INGEST_API_KEY = "sentinel-demo-key-2026"
+$env:SENTINEL_API_URL = "http://127.0.0.1:8000"
+
+python -m uvicorn backend.demo_login:app --host 127.0.0.1 --port 8001 --reload
+```
+
+Open the demo login application:
+
+http://127.0.0.1:8001
+
+### Step 3: Test the Login Application
+
+Use these demo credentials:
+
+- **Username:** `demo-user`
+- **Password:** `demo-password`
+
+First, log in using the correct credentials.
+
+Then try an incorrect password and return to the Sentinel-X dashboard to view the recorded event.
+
+### Step 4: Test Automatic Threat Detection
+
+To demonstrate automatic blocking:
+
+1. Make at least 5 failed login attempts.
+2. Use at least 2 different usernames.
+3. Make the attempts within 10 minutes.
+4. Use the same computer and IP address.
+
+Sentinel-X should detect the suspicious activity and temporarily block that source from logging into the demo application for 15 minutes.
+
+The block is enforced within the demo application only. It does not change firewall settings.
+
+### Step 5: Run Automated Tests
+
+Open another terminal and run:
+
+```powershell
+python -m pytest -q
+```
+
+### Important Notes
+
+- Each time you run the Terminal 1 setup, Sentinel-X creates a new, empty demo database.
+- Your original SQLite database is not deleted.
+- New security events appear as you interact with the demo login application.
+- The dashboard displays actual stored events, not hardcoded statistics.
+- Keep both application terminals running during the demonstration.
+- The API keys shown above are examples for local demonstration only. Use unique, private keys outside a local demo.
+
+
 This walkthrough demonstrates how Sentinel-X monitors security events, detects suspicious behaviour, and responds to potential threats.
 
 ### 1. Start the Security Dashboard
