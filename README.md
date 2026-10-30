@@ -334,3 +334,26 @@ tests/
 - Rules are deterministic and deliberately conservative. Outbound-transfer events are treated as suspicious signals for analyst review; the event source should provide trustworthy context and measured volume.
 - SQLite is suitable for the local demo, not a high-volume distributed event pipeline. The database is local state and is excluded from version control.
 - Status changes are recorded in an incident history, but there is no analyst identity or external ticketing integration.
+
+
+## Technologies Used
+
+| Technology | Purpose |
+|------------|---------|
+| Python | Core programming language |
+| FastAPI | Security event ingestion and REST API |
+| SQLite | Persistent storage for events, incidents, and response history |
+| JavaScript | Dashboard interactions and API integration |
+| HTML & CSS | Responsive security dashboard and demo login interface |
+| Pytest | Automated API, detection, and response testing |
+| Git & GitHub | Version control and project documentation |
+
+### Skills Demonstrated
+
+- Security event monitoring and analysis
+- Rule-based threat detection
+- Brute-force attack identification
+- Incident investigation and risk assessment
+- Automated application-level threat response
+- REST API development and testing
+
